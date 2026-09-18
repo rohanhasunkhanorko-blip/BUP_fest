@@ -14,9 +14,14 @@
       - key: OPENROUTER_MODEL
         value: meta-llama/llama-3.1-70b-instruct
       - key: MONGODB_USERNAME
+        value: rohanhasunkhanorko_db_user
       - key: MONGODB_PASSWORD
+        value: TNgmwGoTwAWXZewe
       - key: MONGODB_CLUSTER
+        value: cluster0.fzj7rdl.mongodb.net
       - key: MONGODB_DB_NAME
         value: gridwise
       - key: JWT_SECRET
+        value: change-me-after-the-demo-32-chars-min
       - key: OPENROUTER_API_KEY
+        value: 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
