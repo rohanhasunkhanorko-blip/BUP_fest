@@ -15,14 +15,9 @@
       - key: OPENROUTER_MODEL
         value: meta-llama/llama-3.1-70b-instruct
       - key: MONGODB_USERNAME
-        sync: false
       - key: MONGODB_PASSWORD
-        sync: false
       - key: MONGODB_CLUSTER
-        sync: false
       - key: MONGODB_DB_NAME
         value: gridwise
       - key: JWT_SECRET
-        sync: false
       - key: OPENROUTER_API_KEY
-        sync: false
