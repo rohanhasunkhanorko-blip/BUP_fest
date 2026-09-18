@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: gridwise
+    runtime: python
+    # Pin a Python version older than 3.14 — motor + pydantic-core wheels
+    # haven't caught up to 3.14 at the time of writing. Match the local venv.
+    pythonVersion: 3.10.11
+    # Render builds and serves from this directory. `requirements.txt` and
+    # `app/` live under `gridwise/`, so this is the cleanest layout.
+    rootDir: gridwise
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LLM_PROVIDER
+        value: openrouter
+      - key: OPENROUTER_MODEL
+        value: meta-llama/llama-3.1-70b-instruct
+      # The five values below must be set manually in the Render dashboard
+      # (see README). They are NEVER committed to the repo.
+      - key: MONGODB_USERNAME
+        sync: false
+      - key: MONGODB_PASSWORD
+        sync: false
+      - key: MONGODB_CLUSTER
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: gridwise
+      - key: JWT_SECRET
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false

@@ -1,0 +1,35 @@
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.envrc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.egg-info/
+build/
+dist/
+
+# --- Local secrets ----------------------------------------------------------
+# Real Atlas / OpenRouter / JWT secrets live here. Never commit.
+.env
+.env.local
+.env.*.local
+
+# --- Smoke / probe scripts (one-off debug helpers) --------------------------
+dump_*.py
+probe_*.py
+uvicorn.out.log
+uvicorn.err.log
+*.log
+
+# --- Editor artifacts -------------------------------------------------------
+.puku/
