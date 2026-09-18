@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GridWise — Energy Optimizer (BUP CSE Fest 2026)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel2: #334155;
+      --accent: #38bdf8;
+      --accent2: #fbbf24;
+      --good: #34d399;
+      --bad: #f87171;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    header .badge {
+      background: rgba(0,0,0,0.25);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel2);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 4px;
+      font-weight: 500;
+    }
+    textarea, input, select {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--panel2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 12.5px;
+      outline: none;
+    }
+    textarea:focus, input:focus { border-color: var(--accent); }
+    textarea { min-height: 90px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    button {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.05s;
+    }
+    button:hover { background: #7dd3fc; }
+    button:active { transform: scale(0.97); }
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--panel2);
+    }
+    button.ghost:hover { background: var(--panel2); }
+    .scenarios {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .scenarios button {
+      padding: 4px 9px;
+      font-size: 11px;
+      background: var(--panel2);
+      color: var(--text);
+    }
+    .scenarios button:hover { background: var(--accent); color: #0f172a; }
+    .right { display: flex; flex-direction: column; gap: 20px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .stat {
+      background: var(--bg);
+      border: 1px solid var(--panel2);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .stat .value.ok { color: var(--good); }
+    .stat .value.warn { color: var(--accent2); }
+    .chart-wrap { position: relative; height: 320px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    }
+    table th, table td {
+      padding: 6px 8px;
+      text-align: right;
+      border-bottom: 1px solid var(--panel2);
+    }
+    table th {
+      background: var(--bg);
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      position: sticky;
+      top: 0;
+    }
+    table td:first-child { text-align: left; }
+    .table-wrap { max-height: 360px; overflow-y: auto; border-radius: 6px; border: 1px solid var(--panel2); }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .pill.idle { background: #334155; color: #cbd5e1; }
+    .pill.charge { background: #1e3a8a; color: #93c5fd; }
+    .pill.discharge { background: #7c2d12; color: #fdba74; }
+    .summary {
+      background: rgba(56, 189, 248, 0.07);
+      border-left: 3px solid var(--accent);
+      padding: 12px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13.5px;
+      line-height: 1.55;
+      margin-bottom: 8px;
+    }
+    .interp-list { font-size: 12px; }
+    .interp-item {
+      background: var(--bg);
+      border: 1px solid var(--panel2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .interp-item .idx { font-weight: 700; color: var(--accent); font-size: 11px; }
+    .interp-item .type {
+      background: var(--panel2);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+    }
+    .interp-item .type.no { background: #422006; color: #fbbf24; }
+    .interp-item .type.yes { background: #064e3b; color: #34d399; }
+    .interp-item .text { color: var(--muted); font-size: 12px; }
+    .status {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.info { background: #0c4a6e; color: #bae6fd; }
+    .status.ok { background: #064e3b; color: #6ee7b7; }
+    .status.err { background: #7f1d1d; color: #fca5a5; }
+    .loading {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--accent);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚡ GridWise Energy Optimizer</h1>
+    <span class="badge">BUP CSE Fest 2026 · Preliminary</span>
+  </header>
+
+  <main>
+    <aside class="panel">
+      <h2>Scenario</h2>
+
+      <label>Scenario ID</label>
+      <input id="scenarioId" value="DEMO-01" />
+
+      <label>Battery capacity (kWh)</label>
+      <div class="row">
+        <input id="batCapacity" type="number" value="500" step="any" />
+        <input id="batInit" type="number" value="200" step="any" />
+      </div>
+      <label style="margin-top:6px">Min / Charge rate / Discharge rate (kWh)</label>
+      <div class="row" style="grid-template-columns:1fr 1fr 1fr">
+        <input id="batMin" type="number" value="50" step="any" />
+        <input id="batCharge" type="number" value="100" step="any" />
+        <input id="batDischarge" type="number" value="100" step="any" />
+      </div>
+
+      <label>Tariff (comma-separated, 24 hours, BDT/kWh)</label>
+      <textarea id="tariff" rows="2">6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,11.5,11.5,11.5,11.5,6.5,6.5</textarea>
+
+      <label>Demand (24 values, kWh)</label>
+      <textarea id="demand" rows="2">90,80,75,70,65,80,110,140,180,210,240,250,235,210,200,205,230,260,300,290,270,240,180,120</textarea>
+
+      <label>Solar forecast (24 values, kWh)</label>
+      <textarea id="solar" rows="2">0,0,0,0,0,0,10,30,70,120,160,180,170,140,90,40,10,0,0,0,0,0,0,0</textarea>
+
+      <label>Operator Notes (one per line)</label>
+      <textarea id="notes" rows="4">Solar panels will be heavily clouded from 1 PM until 2 PM.</textarea>
+
+      <div class="btn-row">
+        <button id="runBtn">▶ Run Optimization</button>
+        <button class="ghost" id="checkBtn">/health</button>
+      </div>
+
+      <label style="margin-top:18px">Quick scenarios</label>
+      <div class="scenarios" id="scenarios"></div>
+    </aside>
+
+    <section class="right">
+      <div class="status" id="status"></div>
+
+      <div class="panel">
+        <h2>Account</h2>
+        <div id="authBox">
+          <div id="authLoggedOut">
+            <label style="margin-top:0">Email</label>
+            <input id="authEmail" type="email" placeholder="you@example.com" />
+            <label>Password</label>
+            <input id="authPassword" type="password" placeholder="••••••••" />
+            <div class="btn-row" style="margin-top:8px">
+              <button id="signupBtn">Sign up</button>
+              <button class="ghost" id="loginBtn">Log in</button>
+            </div>
+            <div class="hint" id="authMsg">Anonymous — runs aren't saved.</div>
+          </div>
+          <div id="authLoggedIn" style="display:none">
+            <div class="hint">Signed in as <strong id="whoEmail"></strong></div>
+            <div class="row" style="grid-template-columns:1fr auto; margin-top:8px">
+              <input id="apiKeyField" readonly />
+              <button class="ghost" id="copyKeyBtn">Copy</button>
+            </div>
+            <div class="btn-row" style="margin-top:8px">
+              <button class="ghost" id="refreshHistoryBtn">Refresh history</button>
+              <button class="ghost" id="logoutBtn">Log out</button>
+            </div>
+          </div>
+        </div>
+        <div class="interp-list" id="historyList" style="margin-top:14px">No history yet.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Totals</h2>
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Total Grid</div>
+            <div class="value" id="statGrid">— <span style="font-size:14px;color:var(--muted)">kWh</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Total Cost</div>
+            <div class="value" id="statCost">— <span style="font-size:14px;color:var(--muted)">BDT</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Peak Grid</div>
+            <div class="value warn" id="statPeak">— <span style="font-size:14px;color:var(--muted)">kW</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Status</div>
+            <div class="value" id="statStatus">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Hourly Schedule</h2>
+        <div class="chart-wrap"><canvas id="chart"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h2>Plan Summary</h2>
+        <div class="summary" id="summary">Run an optimization to see the plan summary.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Directive Interpretations</h2>
+        <div class="interp-list" id="interpList">No data yet.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Hour-by-Hour Detail</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hour</th>
+                <th>Demand</th>
+                <th>Solar</th>
+                <th>Grid</th>
+                <th>Action</th>
+                <th>Battery</th>
+              </tr>
+            </thead>
+            <tbody id="hourlyBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const status = (msg, kind) => {
+      const s = $("status"); s.textContent = msg;
+      s.className = "status show " + (kind || "info");
+      if (kind === "ok") setTimeout(() => s.classList.remove("show"), 4000);
+    };
+    let chart = null;
+
+    // ---- scenarios (subset of public samples) ----
+    const SCENARIOS = {
+      "SAMPLE-01 (SCE1-SCE2-SCE3 baseline)": {
+        scenario_id: "SAMPLE-01",
+        battery: { capacity_kwh: 220, initial_energy_kwh: 110, minimum_energy_kwh: 40,
+                   max_charge_kwh_per_hour: 50, max_discharge_kwh_per_hour: 50 },
+        tariff: [6,6,5,5,5,6,8,10,12,14,16,16,15,14,13,14,18,22,28,30,26,18,10,7],
+        demand: [90,85,80,80,85,95,110,130,150,165,175,180,185,180,170,165,170,185,205,215,205,175,135,105],
+        solar:  [0,0,0,0,0,0,5,20,50,90,130,160,180,170,140,90,45,10,0,0,0,0,0,0],
+        notes:  ["Facilities will wash the rooftop solar panels from noon until 2 PM. During cleaning, usable solar should be treated as roughly 25% of the forecast.",
+                 "The sports office moved next month's registration deadline."]
+      },
+      "SAMPLE-04 (no-discharge window)": {
+        scenario_id: "DEMO-04",
+        battery: { capacity_kwh: 500, initial_energy_kwh: 200, minimum_energy_kwh: 50,
+                   max_charge_kwh_per_hour: 100, max_discharge_kwh_per_hour: 100 },
+        tariff: [6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,11.5,11.5,11.5,11.5,6.5,6.5],
+        demand: [90,80,75,70,65,80,110,140,180,210,240,250,235,210,200,205,230,260,300,290,270,240,180,120],
+        solar:  [0,0,0,0,0,0,10,30,70,120,160,180,170,140,90,40,10,0,0,0,0,0,0,0],
+        notes:  ["Battery must not discharge from 6 PM until 8 PM."]
+      },
+      "SAMPLE-06 (panel inspection)": {
+        scenario_id: "DEMO-06",
+        battery: { capacity_kwh: 500, initial_energy_kwh: 200, minimum_energy_kwh: 50,
+                   max_charge_kwh_per_hour: 100, max_discharge_kwh_per_hour: 100 },
+        tariff: [6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,11.5,11.5,11.5,11.5,6.5,6.5],
+        demand: [90,80,75,70,65,80,110,140,180,210,240,250,235,210,200,205,230,260,300,290,270,240,180,120],
+        solar:  [0,0,0,0,0,0,10,30,70,120,160,180,170,140,90,40,10,0,0,0,0,0,0,0],
+        notes:  ["Panel inspection will leave about half of the forecast solar output.",
+                 "The charging circuit will be unavailable from 9 PM until 11 PM."]
+      },
+      "SAMPLE-07 (peak + 200kWh reserve)": {
+        scenario_id: "SAMPLE-07",
+        battery: { capacity_kwh: 250, initial_energy_kwh: 150, minimum_energy_kwh: 40,
+                   max_charge_kwh_per_hour: 60, max_discharge_kwh_per_hour: 60 },
+        tariff: [6,6,5,5,5,6,8,10,12,14,15,16,16,15,14,15,18,23,29,32,30,21,11,7],
+        demand: [100,95,90,90,95,105,120,135,150,165,175,185,190,185,175,170,180,195,210,225,215,185,145,115],
+        solar:  [0,0,0,0,0,0,5,20,50,90,135,170,190,180,145,95,45,10,0,0,0,0,0,0],
+        notes:  ["Keep at least 90 kWh in the battery from 6 PM until 10 PM for emergency services.",
+                 "The evening transformer limit is 180 kWh of grid import from 7 PM until 9 PM."]
+      },
+      "no notes (baseline)": {
+        scenario_id: "BASELINE",
+        battery: { capacity_kwh: 500, initial_energy_kwh: 200, minimum_energy_kwh: 50,
+                   max_charge_kwh_per_hour: 100, max_discharge_kwh_per_hour: 100 },
+        tariff: [6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,6.5,11.5,11.5,11.5,11.5,6.5,6.5],
+        demand: [90,80,75,70,65,80,110,140,180,210,240,250,235,210,200,205,230,260,300,290,270,240,180,120],
+        solar:  [0,0,0,0,0,0,10,30,70,120,160,180,170,140,90,40,10,0,0,0,0,0,0,0],
+        notes:  ["Optimize as a baseline run with no operator directives."]
+      }
+    };
+    const scn = $("scenarios");
+    Object.keys(SCENARIOS).forEach(name => {
+      const b = document.createElement("button");
+      b.textContent = name; b.title = name;
+      b.onclick = () => loadScenario(SCENARIOS[name]);
+      scn.appendChild(b);
+    });
+
+    function loadScenario(s) {
+      $("scenarioId").value = s.scenario_id;
+      $("batCapacity").value = s.battery.capacity_kwh;
+      $("batInit").value = s.battery.initial_energy_kwh;
+      $("batMin").value = s.battery.minimum_energy_kwh;
+      $("batCharge").value = s.battery.max_charge_kwh_per_hour;
+      $("batDischarge").value = s.battery.max_discharge_kwh_per_hour;
+      $("tariff").value = s.tariff.join(",");
+      $("demand").value = s.demand.join(",");
+      $("solar").value  = s.solar.join(",");
+      $("notes").value  = s.notes.join("\n");
+    }
+    loadScenario(SCENARIOS["SAMPLE-01 (SCE1-SCE2-SCE3 baseline)"]);
+
+    function parseNums(txt, n=24) {
+      const out = txt.split(",").map(s => parseFloat(s.trim()));
+      if (out.length !== n || out.some(v => isNaN(v))) {
+        throw new Error(`Expected ${n} numbers, got ${out.length} (or some are NaN)`);
+      }
+      return out;
+    }
+
+    function buildPayload() {
+      const tariff = parseNums($("tariff").value);
+      const demand = parseNums($("demand").value);
+      const solar  = parseNums($("solar").value);
+      const hours = [];
+      for (let h = 0; h < 24; h++) {
+        hours.push({
+          hour: h,
+          demand_kwh: demand[h],
+          solar_kwh: solar[h],
+          tariff_bdt_per_kwh: tariff[h]
+        });
+      }
+      return {
+        scenario_id: $("scenarioId").value.trim() || "DEMO",
+        battery: {
+          capacity_kwh: parseFloat($("batCapacity").value),
+          initial_energy_kwh: parseFloat($("batInit").value),
+          minimum_energy_kwh: parseFloat($("batMin").value),
+          max_charge_kwh_per_hour: parseFloat($("batCharge").value),
+          max_discharge_kwh_per_hour: parseFloat($("batDischarge").value)
+        },
+        hours: hours,
+        operator_notes: $("notes").value.split("\n").map(s => s.trim()).filter(Boolean)
+      };
+    }
+
+    $("checkBtn").onclick = async () => {
+      try {
+        const r = await fetch("/health");
+        $("statStatus").textContent = "ok";
+        $("statStatus").className = "value ok";
+        status("✅ /health → " + r.status + " " + JSON.stringify(await r.json()), "ok");
+      } catch (e) {
+        $("statStatus").textContent = "err";
+        $("statStatus").className = "value";
+        status("❌ /health failed: " + e.message, "err");
+      }
+    };
+
+    $("runBtn").onclick = async () => {
+      let payload;
+      try { payload = buildPayload(); }
+      catch (e) { status("⚠️ " + e.message, "err"); return; }
+
+      $("runBtn").disabled = true;
+      $("runBtn").innerHTML = '<span class="loading"></span>Running…';
+      $("statStatus").textContent = "…";
+      $("statStatus").className = "value";
+      status("Calling POST /optimize-energy…", "info");
+
+      try {
+        const r = await fetch("/optimize-energy", {
+          method: "POST",
+          headers: apiHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(payload)
+        });
+        const txt = await r.text();
+        if (!r.ok) {
+          status("❌ " + r.status + ": " + txt, "err");
+          $("statStatus").textContent = r.status;
+          return;
+        }
+        const out = JSON.parse(txt);
+        render(out);
+        status("✅ Optimization complete (" + out.hourly_plan.length + " hours)", "ok");
+        $("statStatus").textContent = "ok";
+        $("statStatus").className = "value ok";
+        if (currentUser()) refreshHistory();
+      } catch (e) {
+        status("❌ " + e.message, "err");
+      } finally {
+        $("runBtn").disabled = false;
+        $("runBtn").textContent = "▶ Run Optimization";
+      }
+    };
+
+    // ---- Account / API key ----------------------------------------------------
+    const LS_KEY = "gridwise.apiKey";
+    const LS_EMAIL = "gridwise.email";
+    let _email = "";
+    function currentUser() {
+      const k = localStorage.getItem(LS_KEY);
+      return k ? { api_key: k, email: localStorage.getItem(LS_EMAIL) || "" } : null;
+    }
+    function setUser(key, email) {
+      localStorage.setItem(LS_KEY, key);
+      localStorage.setItem(LS_EMAIL, email || "");
+      _email = email || "";
+      $("whoEmail").textContent = email || "";
+      $("apiKeyField").value = key;
+      $("authLoggedOut").style.display = "none";
+      $("authLoggedIn").style.display = "block";
+      $("authMsg").textContent = "Signed in — runs will be saved.";
+    }
+    function clearUser() {
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_EMAIL);
+      $("authLoggedOut").style.display = "block";
+      $("authLoggedIn").style.display = "none";
+      $("authMsg").textContent = "Anonymous — runs aren't saved.";
+      $("historyList").textContent = "No history yet.";
+    }
+    function apiHeaders(extra) {
+      const h = Object.assign({}, extra || {});
+      const k = localStorage.getItem(LS_KEY);
+      if (k) h["X-API-Key"] = k;
+      return h;
+    }
+
+    $("signupBtn").onclick = async () => {
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      if (!email || !password) { status("⚠️ enter email + password", "err"); return; }
+      try {
+        const r = await fetch("/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const body = await r.json();
+        if (!r.ok) { status("❌ signup: " + (body.detail || r.status), "err"); return; }
+        setUser(body.api_key, body.email || email);
+        status("✅ Account created — save your API key now.", "ok");
+        refreshHistory();
+      } catch (e) { status("❌ " + e.message, "err"); }
+    };
+    $("loginBtn").onclick = async () => {
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      if (!email || !password) { status("⚠️ enter email + password", "err"); return; }
+      try {
+        const r = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const body = await r.json();
+        if (!r.ok) { status("❌ login: " + (body.detail || r.status), "err"); return; }
+        setUser(body.api_key, body.email || email);
+        status("✅ Logged in.", "ok");
+        refreshHistory();
+      } catch (e) { status("❌ " + e.message, "err"); }
+    };
+    $("logoutBtn").onclick = () => { clearUser(); status("Logged out.", "info"); };
+    $("copyKeyBtn").onclick = async () => {
+      try { await navigator.clipboard.writeText($("apiKeyField").value); status("Copied.", "ok"); }
+      catch { $("apiKeyField").select(); document.execCommand("copy"); status("Copied.", "ok"); }
+    };
+
+    $("refreshHistoryBtn").onclick = refreshHistory;
+    async function refreshHistory() {
+      const k = localStorage.getItem(LS_KEY);
+      if (!k) { $("historyList").textContent = "No history yet."; return; }
+      try {
+        const r = await fetch("/runs?limit=10", { headers: apiHeaders() });
+        if (!r.ok) { $("historyList").textContent = "Failed: " + r.status; return; }
+        const runs = await r.json();
+        if (!runs.length) { $("historyList").textContent = "No history yet."; return; }
+        $("historyList").innerHTML = runs.map(rd => `
+          <div class="interp-row" style="cursor:default">
+            <div>
+              <strong>${escapeHtml(rd.scenario_id)}</strong>
+              <span class="hint"> · ${escapeHtml(new Date(rd.created_at).toLocaleString())} · ${rd.status}</span>
+            </div>
+            <div class="hint">grid ${rd.total_grid_kwh.toFixed(1)} kWh · cost ${rd.total_cost_bdt.toFixed(0)} BDT · peak ${rd.peak_grid_kwh.toFixed(0)} kW</div>
+          </div>`).join("");
+      } catch (e) { $("historyList").textContent = "Failed: " + e.message; }
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+
+    // restore session if a key was stored locally
+    if (currentUser()) setUser(currentUser().api_key, currentUser().email);
+
+    function render(out) {
+      $("statGrid").innerHTML = out.total_grid_kwh.toFixed(2) + ' <span style="font-size:14px;color:var(--muted)">kWh</span>';
+      $("statCost").innerHTML = out.total_cost_bdt.toFixed(2) + ' <span style="font-size:14px;color:var(--muted)">BDT</span>';
+      $("statPeak").innerHTML = out.peak_grid_kwh.toFixed(2) + ' <span style="font-size:14px;color:var(--muted)">kW</span>';
+
+      $("summary").textContent = out.plan_summary || "(no summary)";
+
+      const interpList = $("interpList");
+      interpList.innerHTML = "";
+      (out.directive_interpretation || []).forEach(d => {
+        const el = document.createElement("div");
+        el.className = "interp-item";
+        const adj = d.structured_adjustment;
+        const adjStr = adj
+          ? (adj.hours ? `hours=[${adj.hours.join(",")}]` : "")
+              + (adj.factor !== undefined ? ` factor=${adj.factor}` : "")
+              + (adj.minimum_energy_kwh !== undefined ? ` min_kwh=${adj.minimum_energy_kwh}` : "")
+              + (adj.max_grid_kwh !== undefined ? ` cap_kw=${adj.max_grid_kwh}` : "")
+          : "";
+        el.innerHTML = `
+          <span class="idx">#${d.note_index ?? "?"}</span>
+          <span><span class="type ${d.applies ? "yes" : "no"}">${d.directive_type}</span>
+                <span class="text">${d.explanation || ""}${adjStr ? " · " + adjStr : ""}</span></span>
+          <span class="pill ${d.applies ? "discharge" : "idle"}">${d.applies ? "applied" : "no-op"}</span>
+        `;
+        interpList.appendChild(el);
+      });
+
+      const hours = out.hourly_plan.map(p => p.hour);
+      const grid = out.hourly_plan.map(p => p.grid_kwh);
+      // Demand is not echoed back in the response; pull from the input textareas.
+      const demand = parseNums($("demand").value);
+      const solar = out.hourly_plan.map(p => p.solar_used_kwh ?? 0);
+      const batt = out.hourly_plan.map(p => p.battery_energy_after_kwh ?? 0);
+      const tariff = parseNums($("tariff").value);
+
+      if (chart) chart.destroy();
+      chart = new Chart($("chart").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: hours.map(h => String(h).padStart(2, "0") + ":00"),
+          datasets: [
+            { label: "Demand (kWh)", data: demand, borderColor: "#94a3b8",
+              backgroundColor: "rgba(148,163,184,0.1)", borderDash: [4,3], tension: 0.2 },
+            { label: "Solar used (kWh)", data: solar, borderColor: "#fbbf24",
+              backgroundColor: "rgba(251,191,36,0.2)", fill: true, tension: 0.2 },
+            { label: "Grid import (kWh)", data: grid, borderColor: "#38bdf8",
+              backgroundColor: "rgba(56,189,248,0.2)", fill: true, tension: 0.2 },
+            { label: "Tariff (BDT/kWh ×10)", data: tariff.map(t => t*10),
+              borderColor: "#f472b6", borderWidth: 1, pointRadius: 0, tension: 0.2 },
+            { label: "Battery (kWh)", data: batt, borderColor: "#34d399",
+              backgroundColor: "rgba(52,211,153,0.15)", fill: true, tension: 0.2, yAxisID: "y2" }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          scales: {
+            y:  { beginAtZero: true, title: { display: true, text: "kWh / BDT(×10)" }, grid: { color: "#334155" } },
+            y2: { beginAtZero: true, position: "right", title: { display: true, text: "Battery kWh" },
+                  grid: { drawOnChartArea: false } },
+            x:  { grid: { color: "#334155" } }
+          },
+          plugins: { legend: { labels: { color: "#e2e8f0" } } }
+        }
+      });
+
+      const body = $("hourlyBody");
+      body.innerHTML = "";
+      out.hourly_plan.forEach(p => {
+        const tr = document.createElement("tr");
+        const action = p.battery_action || "idle";
+        const battDraw = p.battery_kwh != null ? p.battery_kwh.toFixed(1) : "0.0";
+        tr.innerHTML = `
+          <td>${String(p.hour).padStart(2,"0")}:00</td>
+          <td>${demand[p.hour].toFixed(0)}</td>
+          <td>${(p.solar_used_kwh ?? 0).toFixed(1)}</td>
+          <td>${(p.grid_kwh ?? 0).toFixed(1)}</td>
+          <td><span class="pill ${action}">${action}</span></td>
+          <td>${battDraw} → ${(p.battery_energy_after_kwh ?? 0).toFixed(1)}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
